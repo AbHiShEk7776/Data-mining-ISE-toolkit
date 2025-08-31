@@ -1,0 +1,145 @@
+<div class="app-layout">
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <div class="nav-container">
+      <!-- Brand/Logo -->
+      <div class="nav-brand" (click)="navigateToUpload()">
+        <i class="fas fa-chart-line brand-icon"></i>
+        <div class="brand-text">
+          <h1 class="brand-title">Data Mining Toolkit</h1>
+          <span class="brand-subtitle">Analytics & Visualization</span>
+        </div>
+      </div>
+      
+      <!-- Navigation Menu -->
+      <ul class="nav-menu">
+        <li class="nav-item">
+          <a routerLink="/upload" 
+             routerLinkActive="active" 
+             class="nav-link"
+             [class.active]="isRouteActive('/upload')">
+            <i class="fas fa-cloud-upload-alt nav-icon"></i>
+            <div class="nav-text">
+              <span class="nav-title">Upload</span>
+              <small class="nav-subtitle">Import Data</small>
+            </div>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/preprocessing" 
+             routerLinkActive="active" 
+             class="nav-link"
+             [class.active]="isRouteActive('/preprocessing')">
+            <i class="fas fa-cogs nav-icon"></i>
+            <div class="nav-text">
+              <span class="nav-title">Preprocessing</span>
+              <small class="nav-subtitle">Clean & Transform</small>
+            </div>
+          </a>
+        </li>
+        
+        <li class="nav-item">
+          <a routerLink="/visualization" 
+             routerLinkActive="active" 
+             class="nav-link"
+             [class.active]="isRouteActive('/visualization')">
+            <i class="fas fa-chart-bar nav-icon"></i>
+            <div class="nav-text">
+              <span class="nav-title">Visualization</span>
+              <small class="nav-subtitle">Explore Data</small>
+            </div>
+          </a>
+        </li>
+
+        <!-- NEW: ML Models Navigation Item -->
+        <li class="nav-item">
+          <a routerLink="/ml-models" 
+             routerLinkActive="active" 
+             class="nav-link ml-models-link"
+             [class.active]="isRouteActive('/ml-models')">
+            <i class="fas fa-robot nav-icon"></i>
+            <div class="nav-text">
+              <span class="nav-title">ML Models</span>
+              <small class="nav-subtitle">Train & Predict</small>
+            </div>
+          </a>
+        </li>
+      </ul>
+
+      <!-- Mobile Menu Toggle (for future mobile optimization) -->
+      <button class="mobile-menu-toggle" aria-label="Toggle mobile menu">
+        <i class="fas fa-bars"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Breadcrumb (Optional) -->
+  <div class="breadcrumb-container" *ngIf="currentRoute !== '/'">
+    <div class="container">
+      <nav class="breadcrumb">
+        <i [class]="getCurrentPageIcon()"></i>
+        <span>{{ getCurrentPageTitle() }}</span>
+      </nav>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <!-- Loading Overlay -->
+      <div class="loading-overlay" *ngIf="isLoading">
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+          <p>Processing...</p>
+        </div>
+      </div>
+
+      <!-- Router Outlet -->
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <h4>Data Mining Toolkit</h4>
+          <p>Advanced analytics and visualization platform for data scientists and analysts.</p>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Features</h4>
+          <ul>
+            <li>CSV/Excel Import</li>
+            <li>Data Preprocessing</li>
+            <li>Statistical Analysis</li>
+            <li>Interactive Visualizations</li>
+            <li>Machine Learning Models</li>
+          </ul>
+        </div>
+        
+        <div class="footer-section">
+          <h4>Technology</h4>
+          <div class="tech-stack">
+            <span class="tech-badge">Angular</span>
+            <span class="tech-badge">Django</span>
+            <span class="tech-badge">Python</span>
+            <span class="tech-badge">MySQL</span>
+            <span class="tech-badge">Scikit-learn</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="footer-bottom">
+        <p>&copy; 2025 Data Mining Toolkit. Built with Angular & Django.</p>
+        <div class="footer-links">
+          <a href="#" class="footer-link">Privacy Policy</a>
+          <a href="#" class="footer-link">Terms of Service</a>
+          <a href="#" class="footer-link">Support</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+</div>

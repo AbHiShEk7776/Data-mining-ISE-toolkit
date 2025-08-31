@@ -1,0 +1,318 @@
+<div class="preprocessing-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="fas fa-cogs"></i>
+      Data Preprocessing & Statistics
+    </h2>
+    <p class="page-description">
+      Clean, transform, and analyze your data before applying machine learning algorithms.
+    </p>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="loading">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>Loading data...</p>
+    </div>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Success Alert -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <!-- Dataset Selection -->
+  <div class="card selection-card" *ngIf="!loading">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-database"></i>
+        Select Dataset
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="form-group">
+        <label class="form-label">Choose a dataset to preprocess:</label>
+        <select class="form-control form-select" 
+                [(ngModel)]="selectedDatasetId" 
+                (ngModelChange)="onDatasetChange()">
+          <option value="">Select a dataset...</option>
+          <option *ngFor="let dataset of datasets; trackBy: trackByDataset" 
+                  [value]="dataset.id">
+            {{ dataset.name }} ({{ dataset.rows }} rows, {{ dataset.columns }} columns)
+          </option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Preprocessing Options -->
+  <div class="card options-card" *ngIf="selectedDataset && !loading">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-sliders-h"></i>
+        Preprocessing Options
+      </h3>
+      <div class="status-badge" [class.processed]="isProcessed">
+        {{ isProcessed ? 'Processed' : 'Original' }}
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="options-grid">
+        <!-- Missing Values -->
+        <div class="option-group">
+          <label class="form-label">
+            <i class="fas fa-question-circle"></i>
+            Handle Missing Values
+          </label>
+          <select class="form-control form-select" [(ngModel)]="preprocessingOptions.handleMissing">
+            <option value="drop">Drop rows with missing values</option>
+            <option value="mean">Fill with mean</option>
+            <option value="median">Fill with median</option>
+            <option value="mode">Fill with mode</option>
+          </select>
+        </div>
+
+        <!-- Normalization -->
+        <div class="option-group">
+          <label class="form-label">
+            <i class="fas fa-balance-scale"></i>
+            Normalization Method
+          </label>
+          <select class="form-control form-select" [(ngModel)]="preprocessingOptions.normalizationMethod">
+            <option value="minmax">Min-Max Scaling</option>
+            <option value="zscore">Z-Score Standardization</option>
+            <option value="decimal">Decimal Scaling</option>
+          </select>
+        </div>
+
+        <!-- Discretization -->
+        <div class="option-group">
+          <label class="form-label">
+            <i class="fas fa-layer-group"></i>
+            Discretization Bins
+          </label>
+          <input type="number" 
+                 class="form-control" 
+                 [(ngModel)]="preprocessingOptions.discretizationBins" 
+                 min="2" 
+                 max="20"
+                 placeholder="Number of bins">
+        </div>
+
+        <!-- Remove Duplicates -->
+        <div class="option-group checkbox-group">
+          <label class="checkbox-label">
+            <input type="checkbox" 
+                   class="checkbox-input"
+                   [(ngModel)]="preprocessingOptions.removeDuplicates">
+            <span class="checkbox-custom"></span>
+            <span class="checkbox-text">
+              <i class="fas fa-copy"></i>
+              Remove Duplicate Records
+            </span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-section">
+        <button class="btn btn-primary btn-lg" 
+                (click)="preprocessData()" 
+                [disabled]="processing">
+          <span *ngIf="!processing">
+            <i class="fas fa-play"></i>
+            Apply Preprocessing
+          </span>
+          <span *ngIf="processing">
+            <div class="spinner"></div>
+            Processing...
+          </span>
+        </button>
+
+        <button class="btn btn-warning btn-lg" 
+                (click)="revertData()" 
+                [disabled]="processing || !isProcessed">
+          <i class="fas fa-undo"></i>
+          Revert to Original
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Statistics Display with Charts -->
+  <div class="card stats-card" *ngIf="statistics && !loading">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-chart-pie"></i>
+        Statistical Analysis
+      </h3>
+      <div class="stats-summary">
+        <span class="summary-item">
+          <i class="fas fa-table"></i>
+          {{ statistics.total_rows }} rows
+        </span>
+        <span class="summary-item">
+          <i class="fas fa-columns"></i>
+          {{ statistics.total_columns }} columns
+        </span>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Numerical Columns Statistics -->
+      <div class="stats-section" *ngIf="statistics.numerical_columns.length > 0">
+        <h4 class="section-title">
+          <i class="fas fa-calculator"></i>
+          Numerical Columns Analysis
+        </h4>
+        <div class="stats-grid">
+          <div class="stat-card" *ngFor="let column of statistics.numerical_columns; trackBy: trackByColumn; let i = index">
+            <div class="stat-header">
+              <h5 class="column-name">{{ column.name }}</h5>
+              <span class="data-type">Number</span>
+            </div>
+            
+            <!-- Statistical Values -->
+            <div class="stat-values">
+              <div class="stat-row">
+                <span class="stat-label">Mean:</span>
+                <span class="stat-value">{{ column.mean | number:'1.2-3' }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Median:</span>
+                <span class="stat-value">{{ column.median | number:'1.2-3' }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Mode:</span>
+                <span class="stat-value">{{ column.mode | number:'1.2-3' }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Std Dev:</span>
+                <span class="stat-value">{{ column.std | number:'1.2-3' }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Variance:</span>
+                <span class="stat-value">{{ column.variance | number:'1.2-3' }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Range:</span>
+                <span class="stat-value">{{ column.range | number:'1.2-3' }}</span>
+              </div>
+            </div>
+
+            <!-- Chart for each numerical column -->
+            <div class="chart-container">
+              <div [id]="'numerical-chart-' + i" class="stat-chart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Categorical Columns Statistics -->
+      <div class="stats-section" *ngIf="statistics.categorical_columns.length > 0">
+        <h4 class="section-title">
+          <i class="fas fa-tags"></i>
+          Categorical Columns Analysis
+        </h4>
+        <div class="stats-grid">
+          <div class="stat-card" *ngFor="let column of statistics.categorical_columns; trackBy: trackByColumn; let i = index">
+            <div class="stat-header">
+              <h5 class="column-name">{{ column.name }}</h5>
+              <span class="data-type categorical">Text</span>
+            </div>
+            <div class="stat-values">
+              <div class="stat-row">
+                <span class="stat-label">Unique Values:</span>
+                <span class="stat-value">{{ column.unique_values }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">Most Frequent:</span>
+                <span class="stat-value">{{ column.most_frequent }}</span>
+              </div>
+            </div>
+
+            <!-- Chart for each categorical column -->
+            <div class="chart-container">
+              <div [id]="'categorical-chart-' + i" class="stat-chart"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced Analysis Tools -->
+  <div class="card tools-card" *ngIf="selectedDataset && !loading">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-tools"></i>
+        Advanced Statistical Analysis
+      </h3>
+    </div>
+    <div class="card-body">
+      <!-- Column Selection for Tests -->
+      
+<div class="column-selection" *ngIf="statistics && allColumns.length > 0">
+  <label class="form-label">
+    <i class="fas fa-columns"></i>
+    Select Columns for Analysis
+  </label>
+  <div class="columns-grid">
+    <label *ngFor="let column of allColumns; trackBy: trackByColumn" 
+           class="column-checkbox">
+      <input type="checkbox" 
+             [checked]="isColumnSelected(column.name)"
+             (change)="onColumnSelectionChange(column.name, $event)">
+      <span class="checkbox-custom"></span>
+      <span class="column-name">{{ column.name }}</span>
+    </label>
+  </div>
+</div>
+
+
+      <div class="tools-grid">
+        <button class="btn btn-info tool-btn" (click)="performChiSquareTest()">
+          <i class="fas fa-square-root-alt"></i>
+          <span>Chi-Square Test</span>
+          <small>(Select 2 columns)</small>
+        </button>
+        <button class="btn btn-success tool-btn" (click)="calculateCorrelation()">
+          <i class="fas fa-project-diagram"></i>
+          <span>Correlation Analysis</span>
+        </button>
+        <button class="btn btn-warning tool-btn" (click)="navigateToVisualization()">
+          <i class="fas fa-chart-line"></i>
+          <span>Advanced Visualization</span>
+        </button>
+      </div>
+
+      <!-- Results Display -->
+      <div class="results-section">
+        <!-- Chi-Square Results -->
+        <div class="result-card" *ngIf="chiSquareResult">
+          <h4>Chi-Square Test Results</h4>
+          <div class="result-stats">
+            <p><strong>Chi-Square Statistic:</strong> {{ chiSquareResult.chi2_statistic | number:'1.4-4' }}</p>
+            <p><strong>P-Value:</strong> {{ chiSquareResult.p_value | number:'1.6-6' }}</p>
+            <p><strong>Degrees of Freedom:</strong> {{ chiSquareResult.degrees_of_freedom }}</p>
+          </div>
+          <div id="chi-square-chart" class="analysis-chart"></div>
+        </div>
+
+        <!-- Correlation Results -->
+        <div class="result-card" *ngIf="correlationResult">
+          <h4>Correlation Analysis</h4>
+          <div id="correlation-chart" class="analysis-chart"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

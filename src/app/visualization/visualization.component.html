@@ -1,0 +1,156 @@
+<div class="visualization-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="fas fa-chart-bar"></i>
+      Data Visualization Dashboard
+    </h2>
+    <p class="page-description">
+      Create interactive charts and graphs to explore patterns and insights in your data.
+    </p>
+  </div>
+
+  <!-- Error Alert -->
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <!-- Controls Section -->
+  <div class="card controls-card">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-sliders-h"></i>
+        Visualization Controls
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="controls-grid">
+        <!-- Dataset Selection -->
+      <!-- Replace the dataset selection part with this corrected version -->
+<div class="control-group">
+  <label class="form-label">
+    <i class="fas fa-database"></i>
+    Select Dataset
+  </label>
+  <select class="form-control form-select" 
+        [(ngModel)]="selectedDatasetId" 
+        (ngModelChange)="onDatasetChange()">
+  <option value="">Choose a dataset...</option>
+  <option *ngFor="let dataset of datasets; trackBy: trackByDataset" 
+          [value]="dataset.id">
+    {{ dataset.name }}
+  </option>
+</select>
+</div>
+
+
+        <!-- Chart Type Selection -->
+        <div class="control-group" *ngIf="selectedDataset">
+          <label class="form-label">
+            <i class="fas fa-chart-pie"></i>
+            Chart Type
+          </label>
+          <select class="form-control form-select" [(ngModel)]="chartType">
+            <option *ngFor="let type of chartTypes; trackBy: trackByChartType" [value]="type.value">
+              {{ type.label }}
+            </option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Column Selection -->
+      <div class="column-selection" *ngIf="availableColumns.length > 0">
+        <label class="form-label">
+          <i class="fas fa-columns"></i>
+          Select Columns
+        </label>
+        <div class="columns-grid">
+          <label *ngFor="let column of availableColumns; trackBy: trackByColumn" 
+                 class="column-checkbox">
+            <input type="checkbox" 
+                   [checked]="isColumnSelected(column)"
+                   (change)="onColumnSelectionChange(column, $event)">
+            <span class="checkbox-custom"></span>
+            <span class="column-name">{{ column }}</span>
+          </label>
+        </div>
+        
+        <div class="selection-actions" *ngIf="selectedColumns.length > 0">
+          <button class="btn btn-secondary btn-sm" (click)="clearSelection()">
+            <i class="fas fa-times"></i>
+            Clear Selection
+          </button>
+          <span class="selection-count">
+            {{ selectedColumns.length }} column(s) selected
+          </span>
+        </div>
+      </div>
+
+      <!-- Generate Button -->
+      <div class="generate-section" *ngIf="selectedDataset">
+        <button class="btn btn-primary btn-lg generate-btn" 
+                (click)="generateVisualization()" 
+                [disabled]="!selectedDataset || selectedColumns.length === 0 || loading">
+          <span *ngIf="!loading">
+            <i class="fas fa-magic"></i>
+            Generate Visualization
+          </span>
+          <span *ngIf="loading">
+            <div class="spinner"></div>
+            Generating...
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Container -->
+  <div class="card chart-card" *ngIf="selectedDataset">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-chart-line"></i>
+        Interactive Chart
+      </h3>
+      <div class="chart-info" *ngIf="selectedColumns.length > 0">
+        <span class="chart-type-badge">{{ getChartTypeLabel() }}</span>
+        <span class="columns-badge">{{ selectedColumns.join(', ') }}</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div class="chart-container">
+        <div id="plotDiv" class="plot-area">
+          <div class="chart-placeholder" *ngIf="selectedColumns.length === 0">
+            <i class="fas fa-chart-area"></i>
+            <h4>Select columns to generate visualization</h4>
+            <p>Choose one or more columns from the controls above to create your chart.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart Gallery -->
+  <div class="card gallery-card" *ngIf="selectedDataset">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-images"></i>
+        Chart Types
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="chart-gallery">
+        <div *ngFor="let type of chartTypes; trackBy: trackByChartType" 
+             class="chart-option"
+             [class.active]="chartType === type.value"
+             (click)="chartType = type.value">
+          <div class="chart-icon">
+            <i [class]="getChartIcon(type.value)"></i>
+          </div>
+          <h5>{{ type.label }}</h5>
+          <p>{{ getChartDescription(type.value) }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

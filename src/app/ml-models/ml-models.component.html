@@ -1,0 +1,386 @@
+<div class="ml-models-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <h2 class="page-title">
+      <i class="fas fa-robot"></i>
+      Machine Learning Models
+    </h2>
+    <p class="page-description">
+      Train and evaluate classification models using various machine learning algorithms.
+    </p>
+  </div>
+
+  <!-- Error and Success Messages -->
+  <div class="alert alert-danger" *ngIf="error">
+    <i class="fas fa-exclamation-triangle"></i>
+    {{ error }}
+  </div>
+
+  <div class="alert alert-success" *ngIf="successMessage">
+    <i class="fas fa-check-circle"></i>
+    {{ successMessage }}
+  </div>
+
+  <!-- Data Selection -->
+  <div class="card data-card">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-database"></i>
+        Data Configuration
+      </h3>
+    </div>
+    <div class="card-body">
+      <!-- Dataset Selection -->
+      <div class="form-group">
+        <label class="form-label">
+          <i class="fas fa-table"></i>
+          Select Dataset
+        </label>
+        <select class="form-control form-select" 
+                [(ngModel)]="selectedDatasetId" 
+                (ngModelChange)="onDatasetChange()">
+          <option value="">Choose a dataset...</option>
+          <option *ngFor="let dataset of datasets" [value]="dataset.id">
+            {{ dataset.name }} ({{ dataset.rows }} rows, {{ dataset.columns }} columns)
+          </option>
+        </select>
+      </div>
+
+      <!-- Feature Selection -->
+      <div class="features-section" *ngIf="availableColumns.length > 0">
+        <h4 class="section-title">
+          <i class="fas fa-sliders-h"></i>
+          Feature Selection
+        </h4>
+        
+        <div class="columns-grid">
+          <label *ngFor="let column of availableColumns" class="column-checkbox">
+            <input type="checkbox" 
+                   [checked]="isFeatureSelected(column)"
+                   (change)="onFeatureSelectionChange(column, $event)">
+            <span class="checkbox-custom"></span>
+            <span class="column-name">{{ column }}</span>
+          </label>
+        </div>
+
+        <!-- Target Column Selection -->
+        <div class="form-group target-selection">
+          <label class="form-label">
+            <i class="fas fa-bullseye"></i>
+            Target Column (What to predict)
+          </label>
+          <select class="form-control form-select" [(ngModel)]="targetColumn">
+            <option value="">Select target column...</option>
+            <option *ngFor="let column of availableColumns" [value]="column">
+              {{ column }}
+            </option>
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Model Selection and Configuration -->
+  <div class="card model-card" *ngIf="selectedDataset">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-cogs"></i>
+        Model Configuration
+      </h3>
+    </div>
+    <div class="card-body">
+      <!-- Model Type Selection -->
+      <div class="model-types-grid">
+        <div *ngFor="let modelType of modelTypes" 
+             class="model-type-card"
+             [class.selected]="selectedModelType === modelType.value"
+             (click)="selectedModelType = modelType.value">
+          <div class="model-icon">
+            <i [class]="modelType.icon"></i>
+          </div>
+          <h5>{{ modelType.label }}</h5>
+          <p>{{ modelType.description }}</p>
+        </div>
+      </div>
+
+      <!-- Model Parameters -->
+      <div class="parameters-section" *ngIf="selectedModelType">
+        <h4 class="section-title">
+          <i class="fas fa-tune"></i>
+          Hyperparameters
+        </h4>
+        
+        <div class="parameters-grid">
+          <!-- Logistic Regression Parameters -->
+          <ng-container *ngIf="selectedModelType === 'logistic_regression'">
+            <div class="param-group">
+              <label>Learning Rate</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.logistic_regression.learning_rate" 
+                     step="0.001" 
+                     min="0.001" 
+                     max="1">
+            </div>
+            <div class="param-group">
+              <label>Iterations</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.logistic_regression.n_iterations" 
+                     min="100" 
+                     max="10000">
+            </div>
+          </ng-container>
+
+          <!-- KNN Parameters -->
+          <ng-container *ngIf="selectedModelType === 'knn'">
+            <div class="param-group">
+              <label>Number of Neighbors (K)</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.knn.k" 
+                     min="1" 
+                     max="50">
+            </div>
+          </ng-container>
+
+          <!-- Decision Tree Parameters -->
+          <ng-container *ngIf="selectedModelType === 'decision_tree'">
+            <div class="param-group">
+              <label>Max Depth</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.decision_tree.max_depth" 
+                     min="1" 
+                     max="20">
+            </div>
+            <div class="param-group">
+              <label>Min Samples Split</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.decision_tree.min_samples_split" 
+                     min="2" 
+                     max="20">
+            </div>
+            <div class="param-group">
+              <label>Criterion</label>
+              <select class="form-control form-select" 
+                      [(ngModel)]="modelParameters.decision_tree.criterion">
+                <option value="gini">Gini</option>
+                <option value="entropy">Entropy</option>
+                <option value="gain_ratio">Gain Ratio</option>
+              </select>
+            </div>
+          </ng-container>
+
+          <!-- Neural Network Parameters -->
+          <ng-container *ngIf="selectedModelType === 'neural_network'">
+            <div class="param-group">
+              <label>Learning Rate</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.neural_network.learning_rate" 
+                     step="0.001" 
+                     min="0.001" 
+                     max="1">
+            </div>
+            <div class="param-group">
+              <label>Epochs</label>
+              <input type="number" 
+                     class="form-control" 
+                     [(ngModel)]="modelParameters.neural_network.epochs" 
+                     min="10" 
+                     max="1000">
+            </div>
+            <div class="param-group">
+              <label>Activation Function</label>
+              <select class="form-control form-select" 
+                      [(ngModel)]="modelParameters.neural_network.activation">
+                <option value="relu">ReLU</option>
+                <option value="sigmoid">Sigmoid</option>
+                <option value="tanh">Tanh</option>
+              </select>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- Train Button -->
+      <div class="action-section">
+        <button class="btn btn-primary btn-lg" 
+                (click)="trainModel()" 
+                [disabled]="!selectedDataset || selectedFeatures.length === 0 || !targetColumn || training">
+          <span *ngIf="!training">
+            <i class="fas fa-play"></i>
+            Train Model
+          </span>
+          <span *ngIf="training">
+            <div class="spinner"></div>
+            Training...
+          </span>
+        </button>
+        
+        <button class="btn btn-secondary btn-lg" 
+                (click)="clearResults()" 
+                [disabled]="!trainingResults">
+          <i class="fas fa-refresh"></i>
+          Clear Results
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Training Results -->
+  <div class="card results-card" *ngIf="trainingResults">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-chart-bar"></i>
+        Training Results
+      </h3>
+      <div class="model-info">
+        <span class="model-badge">{{ getModelLabel() }}</span>
+        <span class="time-badge">{{ trainingResults.training_time | number:'1.2-2' }}s</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- Metrics Display -->
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">
+            <i class="fas fa-bullseye"></i>
+          </div>
+          <div class="metric-info">
+            <h4>Accuracy</h4>
+            <p class="metric-value">{{ trainingResults.metrics.accuracy | percent:'1.2-2' }}</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">
+            <i class="fas fa-crosshairs"></i>
+          </div>
+          <div class="metric-info">
+            <h4>Precision</h4>
+            <p class="metric-value">{{ trainingResults.metrics.precision | number:'1.3-3' }}</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">
+            <i class="fas fa-search"></i>
+          </div>
+          <div class="metric-info">
+            <h4>Recall</h4>
+            <p class="metric-value">{{ trainingResults.metrics.recall | number:'1.3-3' }}</p>
+          </div>
+        </div>
+
+        <div class="metric-card">
+          <div class="metric-icon">
+            <i class="fas fa-balance-scale"></i>
+          </div>
+          <div class="metric-info">
+            <h4>F1 Score</h4>
+            <p class="metric-value">{{ trainingResults.metrics.f1_score | number:'1.3-3' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Confusion Matrix -->
+      <div class="confusion-matrix-section">
+        <h4 class="section-title">
+          <i class="fas fa-table"></i>
+          Confusion Matrix
+        </h4>
+        <div id="confusionMatrix" class="confusion-matrix-chart"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="result-actions">
+        <button class="btn btn-success" 
+                (click)="makePredict()" 
+                [disabled]="loading">
+          <i class="fas fa-magic"></i>
+          Make Predictions
+        </button>
+        
+        <button class="btn btn-info" 
+                (click)="exportModel()">
+          <i class="fas fa-download"></i>
+          Export Model
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Trained Models List -->
+  <div class="card models-list-card" *ngIf="trainedModels.length > 0">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-list"></i>
+        Trained Models ({{ trainedModels.length }})
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="models-list">
+        <div *ngFor="let model of trainedModels; let i = index" 
+             class="model-item"
+             [class.active]="model === currentModel">
+          <div class="model-info">
+            <div class="model-header">
+              <i [class]="getModelIcon(model.type)"></i>
+              <h5>{{ model.name }}</h5>
+            </div>
+            <div class="model-metrics" *ngIf="model.metrics">
+              <span class="metric">Accuracy: {{ model.metrics.accuracy | percent:'1.1-1' }}</span>
+              <span class="metric">F1: {{ model.metrics.f1_score | number:'1.2-2' }}</span>
+            </div>
+          </div>
+          <div class="model-actions">
+            <button class="btn btn-sm btn-outline-primary" 
+                    (click)="currentModel = model">
+              Select
+            </button>
+            <button class="btn btn-sm btn-outline-danger" 
+                    (click)="removeModel(i)">
+              <i class="fas fa-trash"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Predictions Display -->
+  <div class="card predictions-card" *ngIf="predictions.length > 0">
+    <div class="card-header">
+      <h3>
+        <i class="fas fa-crystal-ball"></i>
+        Model Predictions ({{ predictions.length }} samples)
+      </h3>
+    </div>
+    <div class="card-body">
+      <div class="predictions-table">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Prediction</th>
+              <th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let pred of predictions.slice(0, 10); let i = index">
+              <td>{{ i + 1 }}</td>
+              <td>{{ pred.prediction }}</td>
+              <td>{{ pred.confidence | percent:'1.1-1' }}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p *ngIf="predictions.length > 10" class="text-muted">
+          Showing first 10 predictions...
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
